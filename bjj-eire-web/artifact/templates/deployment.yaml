@@ -1,0 +1,127 @@
+{{- if .Values.frontend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bjj-frontend.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "bjj-frontend.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.frontend.autoscaling.enabled }}
+  replicas: {{ .Values.frontend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "bjj-frontend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.frontend.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "bjj-frontend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.frontend.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.azure.enabled }}
+      imagePullSecrets:
+        - name: {{ include "bjj-frontend.fullname" . }}-acr-secret
+      {{- end }}
+      serviceAccountName: {{ include "bjj-frontend.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.frontend.podSecurityContext | nindent 8 }}
+      {{- with .Values.frontend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.frontend.waitForApi.enabled }}
+      initContainers:
+      - name: wait-for-api-service
+        image: {{ .Values.frontend.waitForApi.image }}
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for API health check...";
+          until curl -k -s -f {{ .Values.frontend.waitForApi.apiUrl }}; do
+            echo "API health check failed (or not yet reachable), retrying...";
+            sleep 5;
+          done;
+          echo "API is healthy and reachable, proceeding with frontend."
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 65534
+          capabilities:
+            drop:
+            - ALL
+      {{- end }}
+      containers:
+      - name: frontend
+        securityContext:
+          {{- toYaml .Values.frontend.securityContext | nindent 10 }}
+        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.frontend.service.port }}
+          protocol: TCP
+        {{- if .Values.frontend.service.httpsPort }}
+        - name: https
+          containerPort: {{ .Values.frontend.service.httpsPort }}
+          protocol: TCP
+        {{- end }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "bjj-frontend.fullname" . }}
+        {{- if .Values.frontend.livenessProbe }}
+        livenessProbe:
+          {{- toYaml .Values.frontend.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.frontend.readinessProbe }}
+        readinessProbe:
+          {{- toYaml .Values.frontend.readinessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.frontend.startupProbe }}
+        startupProbe:
+          {{- toYaml .Values.frontend.startupProbe | nindent 10 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 10 }}
+        volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/templates/default.conf.template
+          subPath: nginx.conf
+          readOnly: true
+        {{- if .Values.frontend.tlsCert.enabled }}
+        - name: frontend-tls-certs
+          mountPath: {{ .Values.frontend.tlsCert.certMountPath }}
+          subPath: tls.crt
+          readOnly: true
+        - name: frontend-tls-certs
+          mountPath: {{ .Values.frontend.tlsCert.keyMountPath }}
+          subPath: tls.key
+          readOnly: true
+        {{- end }}
+      volumes:
+      - name: nginx-config-volume
+        configMap:
+          name: {{ include "bjj-frontend.fullname" . }}-nginx-config
+      {{- if .Values.frontend.tlsCert.enabled }}
+      - name: frontend-tls-certs
+        secret:
+          secretName: {{ .Values.frontend.tlsCert.secretName }}
+      {{- end }}
+{{- end }}

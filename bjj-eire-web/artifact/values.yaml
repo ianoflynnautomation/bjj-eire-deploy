@@ -1,0 +1,248 @@
+
+nameOverride: "bjj-frontend"
+fullnameOverride: "bjj-frontend"
+namespace: bjj-app
+
+frontend:
+  enabled: true
+  replicaCount: 1
+
+  image:
+    repository: bjj-frontend
+    pullPolicy: IfNotPresent
+    tag: "local"
+
+  imagePullSecrets: []
+
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    fsGroup: 101
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 101
+    capabilities:
+      drop:
+      - ALL
+
+  service:
+    type: ClusterIP
+    port: 80
+    httpsPort: 443
+
+  env:
+    NODE_ENV: production
+    PORT: "80"
+    SERVICES_API_HTTPS_0: "https://bjj-api:443"
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: https
+      scheme: HTTPS
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: https
+      scheme: HTTPS
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  startupProbe:
+    httpGet:
+      path: /health
+      port: https
+      scheme: HTTPS
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  tlsCert:
+    enabled: true
+    secretName: bjj-frontend-tls-secret
+    certMountPath: /etc/nginx/certs/aspnetapp.crt
+    keyMountPath: /etc/nginx/certs/aspnetapp.key
+
+  waitForApi:
+    enabled: true
+    apiUrl: "https://bjj-api.bjj-app.svc.cluster.local:443/health"
+    image: curlimages/curl:latest
+
+  nginxConfig: |
+    access_log /var/log/nginx/access.log main;
+    server_tokens off;
+
+    server {
+        listen 80;
+        server_name app.bjj.local 127.0.0.1 localhost;
+        server_tokens off;
+
+        location / {
+            return 301 https://$host$request_uri;
+        }
+
+        location /health {
+            return 200 "OK";
+            add_header Content-Type text/plain;
+        }
+    }
+
+    server {
+        listen 443 ssl default_server;
+        http2 on;
+        server_name app.bjj.local 127.0.0.1 localhost;
+        server_tokens off;
+
+        ssl_certificate       /etc/nginx/certs/aspnetapp.crt;
+        ssl_certificate_key   /etc/nginx/certs/aspnetapp.key;
+        ssl_protocols         TLSv1.2 TLSv1.3;
+        ssl_ciphers           ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+        ssl_session_timeout   1d;
+        ssl_session_cache     shared:SSL:10m;
+        ssl_session_tickets   off;
+        ssl_stapling          on;
+        ssl_stapling_verify   on;
+
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+
+        access_log /var/log/nginx/server.access.log main;
+        error_log  /var/log/nginx/server.error.log warn;
+
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_buffers 16 8k;
+        gzip_http_version 1.1;
+        gzip_min_length 256;
+        gzip_types application/atom+xml application/geo+json application/javascript application/x-javascript application/json application/ld+json application/manifest+json application/rdf+xml application/rss+xml application/vnd.ms-fontobject application/wasm application/x-web-app-manifest+json application/xhtml+xml application/xml font/eot font/otf font/ttf image/svg+xml image/x-icon text/cache-manifest text/css text/javascript text/plain text/vcard text/vnd.rim.location.xloc text/vtt text/x-component text/x-cross-domain-policy;
+
+        root /usr/share/nginx/html;
+
+        location ~* \.(?:css|js|jpg|jpeg|gif|png|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public";
+            access_log off;       
+        }
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /api/ {
+            proxy_pass ${SERVICES_API_HTTPS_0};
+            proxy_pass_header Content-Security-Policy;
+            proxy_pass_header Permissions-Policy;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Host $host;
+            proxy_set_header X-Forwarded-Port $server_port;
+        }
+
+        location /health {
+            access_log off;
+            return 200 "OK";
+            add_header Content-Type text/plain;
+        }
+
+        location ~ /\. {
+            deny all;
+        }
+    }
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    # nginx.ingress.kubernetes.io/rate-limit: "100"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  
+  hosts:
+    - host: app.bjj.local
+      paths:
+        - path: /
+          pathType: Prefix
+  
+  tls:
+    - secretName: bjj-tls-secret
+      hosts:
+        - app.bjj.local
+
+secrets:
+  frontendTlsCert:
+    enabled: true
+    create: false
+    name: bjj-frontend-tls-secret
+    key: tls.crt
+    value: ""
+
+  frontendTlsKey:
+    enabled: true
+    create: false
+    name: bjj-frontend-tls-secret
+    key: tls.key
+    value: ""
+
+azure:
+  enabled: false
+  tenantId: ""
+  keyVaultName: ""
+  acrName: ""
+  workloadIdentity:
+    enabled: false
+    clientId: ""

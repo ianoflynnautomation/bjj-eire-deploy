@@ -1,0 +1,13 @@
+apiVersion: v2
+name: bjj-mongodb
+description: A Helm chart for MongoDB database for BJJ Application
+type: application
+version: 0.1.0
+appVersion: "7.0"
+keywords:
+  - mongodb
+  - database
+  - bjj
+maintainers:
+  - name: DevOps Team
+    email: devops@example.com

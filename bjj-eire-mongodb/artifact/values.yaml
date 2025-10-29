@@ -1,0 +1,119 @@
+nameOverride: "bjj-mongodb"
+fullnameOverride: "bjj-mongodb"
+namespace: bjj-app
+
+mongodb:
+  enabled: true
+  
+  replicaCount: 1
+
+  image:
+    repository: mongo
+    pullPolicy: IfNotPresent
+    tag: "7.0"
+
+  imagePullSecrets: []
+
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    fsGroup: 999
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 999
+    capabilities:
+      drop:
+      - ALL
+
+  service:
+    type: ClusterIP
+    port: 27017
+
+  config:
+    user: admin
+    database: Mongodb
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  livenessProbe:
+    exec:
+      command:
+      - mongosh
+      - --eval
+      - "db.adminCommand('ping')"
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 6
+    successThreshold: 1
+
+  readinessProbe:
+    exec:
+      command:
+      - mongosh
+      - --eval
+      - "db.adminCommand('ping')"
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  startupProbe:
+    exec:
+      command:
+      - mongosh
+      - --eval
+      - "db.adminCommand('ping')"
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+  persistence:
+    enabled: true
+    storageClassName: standard
+    size: 10Gi
+    accessModes:
+      - ReadWriteOnce
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+secrets:
+  mongodbRootPassword:
+    enabled: true
+    create: false
+    name: bjj-mongodb-root-password
+    key: mongodb-password
+    value: ""
+
+azure:
+  enabled: false
+  tenantId: ""
+  keyVaultName: ""
+  workloadIdentity:
+    enabled: false
+    clientId: ""

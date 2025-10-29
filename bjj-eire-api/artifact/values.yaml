@@ -1,0 +1,160 @@
+
+nameOverride: "bjj-api"
+fullnameOverride: "bjj-api"
+namespace: bjj-app
+
+api:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: bjj-api
+    pullPolicy: IfNotPresent
+    tag: "local"
+
+  imagePullSecrets: []
+
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 1000
+    capabilities:
+      drop:
+      - ALL
+
+  service:
+    type: ClusterIP
+    port: 80
+    httpsPort: 443
+
+  env:
+    ASPNETCORE_ENVIRONMENT: Development
+    ASPNETCORE_URLS: "http://+:80;https://+:443"
+    CorsOptions__AllowedOrigins: "https://app.bjj.local,http://app.bjj.local,http://bjj-frontend:80,https://bjj-frontend:443"
+    Serilog__WriteTo__1__Args__serverUrl: http://seq:80
+    Serilog__WriteTo__2__Args__endpoint: http://otel-collector:4317
+    Serilog__Properties__Application: BjjWorld.Api
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    OTEL_RESOURCE_ATTRIBUTES__service.name: BjjWorld.Api
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: https
+      scheme: HTTPS
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: https
+      scheme: HTTPS
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  startupProbe:
+    httpGet:
+      path: /health
+      port: https
+      scheme: HTTPS
+    initialDelaySeconds: 0
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+
+  kestrelCert:
+    enabled: true
+    mountPath: /https
+    secretName: bjj-api-kestrel-cert-secret
+
+mongodb:
+  config:
+    user: admin
+    host: bjj-mongodb
+    port: 27017
+    database: Mongodb
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+  
+  hosts:
+    - host: api.bjj.local
+      paths:
+        - path: /
+          pathType: Prefix
+  
+  tls:
+    - secretName: bjj-tls-secret
+      hosts:
+        - api.bjj.local
+
+secrets:
+  apiKestrelCertPassword:
+    enabled: true
+    create: false
+    name: bjj-api-kestrel-cert-password
+    key: cert-password
+    value: c2VjdXJlc"GFzc3dvcmQxMjM=
+
+  mongodbRootPassword:
+    enabled: true
+    create: false
+    name: bjj-mongodb-root-password
+    key: mongodb-password
+    value: ""
+
+azure:
+  enabled: false
+  tenantId: ""
+  keyVaultName: ""
+  acrName: ""
+  workloadIdentity:
+    enabled: false
+    clientId: ""

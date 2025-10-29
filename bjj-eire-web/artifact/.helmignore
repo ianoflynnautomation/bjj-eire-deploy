@@ -1,0 +1,39 @@
+# VCS
+.git/
+.hg/
+.svn/
+
+# OS/filesystem
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node/Build
+node_modules/
+dist/
+build/
+coverage/
+
+# Helm
+charts/
+Chart.lock
+*.tgz
+
+# Env/Secrets
+.env
+.env.*
+*.secret
+*.secrets
+
+# Docs/Meta (not needed in chart package)
+README.md
+LICENSE
+
+# Tests
+**/test/**
+**/tests/**

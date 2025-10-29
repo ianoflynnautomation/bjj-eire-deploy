@@ -1,0 +1,15 @@
+
+apiVersion: v2
+name: bjj-frontend
+description: A Helm chart for BJJ Application Frontend - Nginx-based web application
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - frontend
+  - nginx
+  - bjj
+  - web
+maintainers:
+  - name: DevOps Team
+    email: devops@example.com

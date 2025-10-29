@@ -1,0 +1,14 @@
+apiVersion: v2
+name: bjj-api
+description: A Helm chart for BJJ Application API - ASP.NET Core Web API
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - api
+  - aspnet
+  - dotnet
+  - bjj
+maintainers:
+  - name: DevOps Team
+    email: devops@example.com

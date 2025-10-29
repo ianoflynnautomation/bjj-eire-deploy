@@ -1,0 +1,102 @@
+{{- if .Values.mongodb.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "bjj-mongodb.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "bjj-mongodb.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.mongodb.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "bjj-mongodb.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.mongodb.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "bjj-mongodb.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.mongodb.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "bjj-mongodb.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.mongodb.podSecurityContext | nindent 8 }}
+      {{- with .Values.mongodb.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongodb.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.mongodb.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: mongodb
+        securityContext:
+          {{- toYaml .Values.mongodb.securityContext | nindent 10 }}
+        image: "{{ .Values.mongodb.image.repository }}:{{ .Values.mongodb.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.mongodb.image.pullPolicy }}
+        ports:
+        - name: mongo
+          containerPort: {{ .Values.mongodb.service.port }}
+          protocol: TCP
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: {{ .Values.mongodb.config.user | quote }}
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.mongodbRootPassword.name }}
+              key: {{ .Values.secrets.mongodbRootPassword.key }}
+        - name: MONGO_INITDB_DATABASE
+          value: {{ .Values.mongodb.config.database | quote }}
+        {{- if .Values.mongodb.livenessProbe }}
+        livenessProbe:
+          {{- toYaml .Values.mongodb.livenessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.mongodb.readinessProbe }}
+        readinessProbe:
+          {{- toYaml .Values.mongodb.readinessProbe | nindent 10 }}
+        {{- end }}
+        {{- if .Values.mongodb.startupProbe }}
+        startupProbe:
+          {{- toYaml .Values.mongodb.startupProbe | nindent 10 }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.mongodb.resources | nindent 10 }}
+        volumeMounts:
+        - name: mongodb-persistent-storage
+          mountPath: /data/db
+        {{- if .Values.azure.enabled }}
+        - name: secrets-store-vol
+          mountPath: /mnt/secrets-store
+          readOnly: true
+        {{- end }}
+      volumes:
+      - name: mongodb-persistent-storage
+        {{- if .Values.mongodb.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "bjj-mongodb.fullname" . }}-pvc
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
+      {{- if .Values.azure.enabled }}
+      - name: secrets-store-vol
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: {{ include "bjj-mongodb.fullname" . }}-akv-secrets
+      {{- end }}
+{{- end }}

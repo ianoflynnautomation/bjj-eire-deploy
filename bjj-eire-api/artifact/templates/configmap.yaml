@@ -1,0 +1,13 @@
+{{- if .Values.api.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bjj-api.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "bjj-api.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.api.env }}
+  {{ $key }}: {{ tpl ($value | toString) $ | quote }}
+  {{- end }}
+{{- end }}
