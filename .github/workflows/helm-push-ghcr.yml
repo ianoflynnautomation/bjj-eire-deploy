@@ -6,12 +6,12 @@ on:
     tags:
       - "chart/v*.*.*"
     paths:
-      - "charts/**"
+      - "bjj-eire*/**"
       - ".github/workflows/helm-push-ghcr.yml"
   pull_request:
     branches: [main]
     paths:
-      - "charts/**"
+      - "bjj-eire*/**"
       - ".github/workflows/helm-push-ghcr.yml"
   workflow_dispatch:
     inputs:
@@ -50,16 +50,16 @@ jobs:
         with:
           filters: |
             api:
-              - 'charts/bjj-eire-api/**'
+              - 'bjj-eire-api/**'
             mongodb:
-              - 'charts/bjj-eire-mongodb/**'
+              - 'bjj-eire-mongodb/**'
             frontend:
-              - 'charts/bjj-eire-web/**'
+              - 'bjj-eire-web/**'
             umbrella:
-              - 'charts/bjj-eire/**'
-              - 'charts/bjj-eire-api/**'
-              - 'charts/bjj-eire-mongodb/**'
-              - 'charts/bjj-eire-web/**'
+              - 'bjj-eire/**'
+              - 'bjj-eire-api/**'
+              - 'bjj-eire-mongodb/**'
+              - 'bjj-eire-web/**'
 
   lint:
     name: Lint Charts
@@ -75,14 +75,14 @@ jobs:
 
       - name: Lint individual charts
         run: |
-          helm lint charts/bjj-eire-api/artifact
-          helm lint charts/bjj-eire-mongodb/artifact
-          helm lint charts/bjj-eire-web/artifact
+          helm lint bjj-eire-api/artifact
+          helm lint bjj-eire-mongodb/artifact
+          helm lint bjj-eire-web/artifact
 
       - name: Build umbrella dependencies & lint
         run: |
-          helm dependency build charts/bjj-eire/artifact
-          helm lint charts/bjj-eire/artifact
+          helm dependency build bjj-eire/artifact
+          helm lint bjj-eire/artifact
 
   push-api:
     name: Package & Push bjj-api
@@ -103,7 +103,7 @@ jobs:
       - name: Extract chart version
         id: ver
         run: |
-          VERSION=$(helm show chart charts/bjj-eire-api/artifact | grep '^version:' | awk '{print $2}')
+          VERSION=$(helm show chart bjj-eire-api/artifact | grep '^version:' | awk '{print $2}')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR (Helm OCI)
@@ -114,7 +114,7 @@ jobs:
               --password-stdin
 
       - name: Package chart
-        run: helm package charts/bjj-eire-api/artifact --destination /tmp/charts
+        run: helm package bjj-eire-api/artifact --destination /tmp/charts
 
       - name: Push chart to GHCR
         run: |
@@ -144,7 +144,7 @@ jobs:
       - name: Extract chart version
         id: ver
         run: |
-          VERSION=$(helm show chart charts/bjj-eire-mongodb/artifact | grep '^version:' | awk '{print $2}')
+          VERSION=$(helm show chart bjj-eire-mongodb/artifact | grep '^version:' | awk '{print $2}')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR (Helm OCI)
@@ -155,7 +155,7 @@ jobs:
               --password-stdin
 
       - name: Package chart
-        run: helm package charts/bjj-eire-mongodb/artifact --destination /tmp/charts
+        run: helm package bjj-eire-mongodb/artifact --destination /tmp/charts
 
       - name: Push chart to GHCR
         run: |
@@ -185,7 +185,7 @@ jobs:
       - name: Extract chart version
         id: ver
         run: |
-          VERSION=$(helm show chart charts/bjj-eire-web/artifact | grep '^version:' | awk '{print $2}')
+          VERSION=$(helm show chart bjj-eire-web/artifact | grep '^version:' | awk '{print $2}')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR (Helm OCI)
@@ -196,7 +196,7 @@ jobs:
               --password-stdin
 
       - name: Package chart
-        run: helm package charts/bjj-eire-web/artifact --destination /tmp/charts
+        run: helm package bjj-eire-web/artifact --destination /tmp/charts
 
       - name: Push chart to GHCR
         run: |
@@ -227,11 +227,11 @@ jobs:
       - name: Extract chart version
         id: ver
         run: |
-          VERSION=$(helm show chart charts/bjj-eire/artifact | grep '^version:' | awk '{print $2}')
+          VERSION=$(helm show chart bjj-eire/artifact | grep '^version:' | awk '{print $2}')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Build umbrella dependencies (file:// → tarballs)
-        run: helm dependency build charts/bjj-eire/artifact
+        run: helm dependency build bjj-eire/artifact
 
       - name: Login to GHCR (Helm OCI)
         run: |
@@ -241,7 +241,7 @@ jobs:
               --password-stdin
 
       - name: Package umbrella chart
-        run: helm package charts/bjj-eire/artifact --destination /tmp/charts
+        run: helm package bjj-eire/artifact --destination /tmp/charts
 
       - name: Push umbrella chart to GHCR
         run: |
