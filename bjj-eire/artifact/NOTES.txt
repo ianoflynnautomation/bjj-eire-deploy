@@ -1,0 +1,21 @@
+BJJ Éire has been deployed!
+
+Components:
+  - MongoDB:  {{ .Release.Namespace }}/bjj-mongodb:27017
+  - API:      {{ .Release.Namespace }}/bjj-api:80 (HTTP) / :443 (HTTPS)
+  - Frontend: {{ .Release.Namespace }}/bjj-frontend:80 (HTTP) / :443 (HTTPS)
+
+To check rollout status:
+  kubectl rollout status deployment/bjj-api -n {{ .Release.Namespace }}
+  kubectl rollout status statefulset/bjj-mongodb -n {{ .Release.Namespace }}
+  kubectl rollout status deployment/bjj-frontend -n {{ .Release.Namespace }}
+
+For local access (after deploy.sh has set /etc/hosts):
+  https://app.bjj.local   → Frontend
+  https://api.bjj.local   → API
+
+Upgrade with a new image tag:
+  helm upgrade bjj-eire . \
+    -f values.yaml -f values-prod.yaml \
+    --set bjj-api.api.image.tag=v1.2.3 \
+    --set bjj-frontend.frontend.image.tag=v1.2.3
