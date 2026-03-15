@@ -1,4 +1,3 @@
-
 nameOverride: "bjj-frontend"
 fullnameOverride: "bjj-frontend"
 namespace: bjj-app
@@ -35,7 +34,7 @@ frontend:
     runAsUser: 101
     capabilities:
       drop:
-      - ALL
+        - ALL
 
   service:
     type: ClusterIP
@@ -46,6 +45,7 @@ frontend:
     NODE_ENV: production
     PORT: "80"
     SERVICES_API_HTTPS_0: "https://bjj-api:443"
+    SERVICES_API_HTTP_0: "http://bjj-api:80"
 
   resources:
     limits:
@@ -58,8 +58,8 @@ frontend:
   livenessProbe:
     httpGet:
       path: /health
-      port: https
-      scheme: HTTPS
+      port: http
+      scheme: HTTP
     initialDelaySeconds: 30
     periodSeconds: 30
     timeoutSeconds: 10
@@ -69,8 +69,8 @@ frontend:
   readinessProbe:
     httpGet:
       path: /health
-      port: https
-      scheme: HTTPS
+      port: http
+      scheme: HTTP
     initialDelaySeconds: 10
     periodSeconds: 10
     timeoutSeconds: 5
@@ -80,8 +80,8 @@ frontend:
   startupProbe:
     httpGet:
       path: /health
-      port: https
-      scheme: HTTPS
+      port: http
+      scheme: HTTP
     initialDelaySeconds: 0
     periodSeconds: 5
     timeoutSeconds: 5
@@ -89,9 +89,7 @@ frontend:
     successThreshold: 1
 
   nodeSelector: {}
-
   tolerations: []
-
   affinity: {}
 
   autoscaling:
@@ -110,7 +108,7 @@ frontend:
   waitForApi:
     enabled: true
     apiUrl: "https://bjj-api.bjj-app.svc.cluster.local:443/health"
-    image: curlimages/curl:latest
+    image: curlimages/curl:8.11.1
 
   nginxConfig: |
     access_log /var/log/nginx/access.log main;
@@ -118,7 +116,7 @@ frontend:
 
     server {
         listen 80;
-        server_name app.bjj.local 127.0.0.1 localhost;
+        server_name bjjeire.com www.bjjeire.com app.bjj.local 127.0.0.1 localhost;
         server_tokens off;
 
         location / {
@@ -134,7 +132,7 @@ frontend:
     server {
         listen 443 ssl default_server;
         http2 on;
-        server_name app.bjj.local 127.0.0.1 localhost;
+        server_name bjjeire.com www.bjjeire.com app.bjj.local 127.0.0.1 localhost;
         server_tokens off;
 
         ssl_certificate       /etc/nginx/certs/aspnetapp.crt;
@@ -169,7 +167,7 @@ frontend:
         location ~* \.(?:css|js|jpg|jpeg|gif|png|ico|svg|woff|woff2|ttf|eot)$ {
             expires 1y;
             add_header Cache-Control "public";
-            access_log off;       
+            access_log off;
         }
 
         location / {
@@ -209,15 +207,12 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
-    # nginx.ingress.kubernetes.io/rate-limit: "100"
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  
   hosts:
     - host: app.bjj.local
       paths:
         - path: /
           pathType: Prefix
-  
   tls:
     - secretName: bjj-tls-secret
       hosts:

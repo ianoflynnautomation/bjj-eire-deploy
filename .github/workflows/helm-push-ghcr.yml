@@ -1,0 +1,254 @@
+name: Helm — Lint, Package & Push to GHCR
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "chart/v*.*.*"
+    paths:
+      - "bjj-eire*/**"
+      - ".github/workflows/helm-push-ghcr.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "bjj-eire*/**"
+      - ".github/workflows/helm-push-ghcr.yml"
+  workflow_dispatch:
+    inputs:
+      push:
+        description: "Push charts to GHCR (default: lint + package only)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+  HELM_VERSION: "3.16.4"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  detect-changes:
+    name: Detect Changed Charts
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      mongodb: ${{ steps.filter.outputs.mongodb }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      umbrella: ${{ steps.filter.outputs.umbrella }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api:
+              - 'bjj-eire-api/**'
+            mongodb:
+              - 'bjj-eire-mongodb/**'
+            frontend:
+              - 'bjj-eire-web/**'
+            umbrella:
+              - 'bjj-eire/**'
+              - 'bjj-eire-api/**'
+              - 'bjj-eire-mongodb/**'
+              - 'bjj-eire-web/**'
+
+  lint:
+    name: Lint Charts
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Lint individual charts
+        run: |
+          helm lint bjj-eire-api/artifact
+          helm lint bjj-eire-mongodb/artifact
+          helm lint bjj-eire-web/artifact
+
+      - name: Build umbrella dependencies & lint
+        run: |
+          helm dependency build bjj-eire/artifact
+          helm lint bjj-eire/artifact
+
+  push-api:
+    name: Package & Push bjj-api
+    runs-on: ubuntu-latest
+    needs: [detect-changes, lint]
+    if: |
+      needs.lint.result == 'success' &&
+      (needs.detect-changes.outputs.api == 'true' || startsWith(github.ref, 'refs/tags/')) &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || inputs.push == true)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Extract chart version
+        id: ver
+        run: |
+          VERSION=$(helm show chart bjj-eire-api/artifact | grep '^version:' | awk '{print $2}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR (Helm OCI)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} \
+              --username ${{ github.actor }} \
+              --password-stdin
+
+      - name: Package chart
+        run: helm package bjj-eire-api/artifact --destination /tmp/charts
+
+      - name: Push chart to GHCR
+        run: |
+          helm push /tmp/charts/bjj-api-${{ steps.ver.outputs.version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+
+      - name: Log pushed reference
+        run: |
+          echo "Pushed: oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-api:${{ steps.ver.outputs.version }}"
+
+  push-mongodb:
+    name: Package & Push bjj-mongodb
+    runs-on: ubuntu-latest
+    needs: [detect-changes, lint]
+    if: |
+      needs.lint.result == 'success' &&
+      (needs.detect-changes.outputs.mongodb == 'true' || startsWith(github.ref, 'refs/tags/')) &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || inputs.push == true)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Extract chart version
+        id: ver
+        run: |
+          VERSION=$(helm show chart bjj-eire-mongodb/artifact | grep '^version:' | awk '{print $2}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR (Helm OCI)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} \
+              --username ${{ github.actor }} \
+              --password-stdin
+
+      - name: Package chart
+        run: helm package bjj-eire-mongodb/artifact --destination /tmp/charts
+
+      - name: Push chart to GHCR
+        run: |
+          helm push /tmp/charts/bjj-mongodb-${{ steps.ver.outputs.version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+
+      - name: Log pushed reference
+        run: |
+          echo "Pushed: oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-mongodb:${{ steps.ver.outputs.version }}"
+
+  push-frontend:
+    name: Package & Push bjj-frontend
+    runs-on: ubuntu-latest
+    needs: [detect-changes, lint]
+    if: |
+      needs.lint.result == 'success' &&
+      (needs.detect-changes.outputs.frontend == 'true' || startsWith(github.ref, 'refs/tags/')) &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || inputs.push == true)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Extract chart version
+        id: ver
+        run: |
+          VERSION=$(helm show chart bjj-eire-web/artifact | grep '^version:' | awk '{print $2}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR (Helm OCI)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} \
+              --username ${{ github.actor }} \
+              --password-stdin
+
+      - name: Package chart
+        run: helm package bjj-eire-web/artifact --destination /tmp/charts
+
+      - name: Push chart to GHCR
+        run: |
+          helm push /tmp/charts/bjj-frontend-${{ steps.ver.outputs.version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+
+      - name: Log pushed reference
+        run: |
+          echo "Pushed: oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-frontend:${{ steps.ver.outputs.version }}"
+
+  push-umbrella:
+    name: Package & Push bjj-eire (umbrella)
+    runs-on: ubuntu-latest
+    needs: [detect-changes, lint, push-api, push-mongodb, push-frontend]
+    if: |
+      always() &&
+      needs.lint.result == 'success' &&
+      (needs.detect-changes.outputs.umbrella == 'true' || startsWith(github.ref, 'refs/tags/')) &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') || inputs.push == true)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Extract chart version
+        id: ver
+        run: |
+          VERSION=$(helm show chart bjj-eire/artifact | grep '^version:' | awk '{print $2}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build umbrella dependencies (file:// → tarballs)
+        run: helm dependency build bjj-eire/artifact
+
+      - name: Login to GHCR (Helm OCI)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} \
+              --username ${{ github.actor }} \
+              --password-stdin
+
+      - name: Package umbrella chart
+        run: helm package bjj-eire/artifact --destination /tmp/charts
+
+      - name: Push umbrella chart to GHCR
+        run: |
+          helm push /tmp/charts/bjj-eire-${{ steps.ver.outputs.version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+
+      - name: Log pushed reference
+        run: |
+          echo "Pushed: oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-eire:${{ steps.ver.outputs.version }}"
+

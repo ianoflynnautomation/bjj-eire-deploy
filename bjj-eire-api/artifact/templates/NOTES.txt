@@ -1,12 +1,16 @@
-1. Get the application URL by running these commands:
+BJJ Éire API deployed successfully.
 
+Access:
 {{- if .Values.ingress.enabled }}
 {{- range $host := .Values.ingress.hosts }}
   {{- range .paths }}
   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}{{ .path }}
   {{- end }}
 {{- end }}
-{{- else if contains "NodePort" .Values.api.service.type }}
-  export NODE_PORT=$(kubectl get --namespace {{ .Values.namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "bjj-api.fullname" . }})
-  export NODE_IP=$(kubectl get nodes --namespace {{ .Values.namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
-  echo http://$NODE_IP:$NODE_
+{{- else }}
+  kubectl port-forward svc/{{ include "bjj-api.fullname" . }} 8080:{{ .Values.api.service.port }} -n {{ .Values.namespace }}
+  Then open: http://localhost:8080
+{{- end }}
+
+Health check:
+  kubectl get pods -n {{ .Values.namespace }} -l app.kubernetes.io/name={{ include "bjj-api.name" . }}

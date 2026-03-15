@@ -1,0 +1,6 @@
+.DS_Store
+*.bak
+*.tmp
+charts/bjj-api/
+charts/bjj-frontend/
+charts/bjj-mongodb/

@@ -35,5 +35,5 @@ README.md
 LICENSE
 
 # Tests
-**/test/**
-**/tests/**
+test/
+tests/
