@@ -1,11 +1,3 @@
-# ============================================================
-# Local / Minikube overrides
-# Mirrors appsettings.Development.json + local .env settings.
-# Usage:
-#   helm upgrade --install bjj-eire . -f values.yaml -f values-local.yaml \
-#     --set bjj-api.secrets.mongodbRootPassword.value=$(base64 -i secrets/mongodb_password.txt)
-# ============================================================
-
 bjj-mongodb:
   mongodb:
     resources:
@@ -24,7 +16,7 @@ bjj-api:
     image:
       repository: bjj-api
       tag: "local"
-      pullPolicy: Never   
+      pullPolicy: Never
     env:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: "https://+:443;http://+:80"

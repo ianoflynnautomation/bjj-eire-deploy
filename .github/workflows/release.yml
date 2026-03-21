@@ -1,0 +1,176 @@
+name: Release — Charts
+
+on:
+  push:
+    branches: [main]
+
+  repository_dispatch:
+    types: [app-released]
+
+  workflow_dispatch:
+    inputs:
+      push:
+        description: "Push charts to GHCR (default: lint only)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+  HELM_VERSION: "3.16.4"
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    outputs:
+      umbrella_released: ${{ steps.release.outputs['bjj-eire--release_created'] }}
+      umbrella_version:  ${{ steps.release.outputs['bjj-eire--version'] }}
+      umbrella_tag:      ${{ steps.release.outputs['bjj-eire--tag_name'] }}
+      api_released:      ${{ steps.release.outputs['bjj-eire-api--release_created'] }}
+      api_version:       ${{ steps.release.outputs['bjj-eire-api--version'] }}
+      mongodb_released:  ${{ steps.release.outputs['bjj-eire-mongodb--release_created'] }}
+      mongodb_version:   ${{ steps.release.outputs['bjj-eire-mongodb--version'] }}
+      web_released:      ${{ steps.release.outputs['bjj-eire-web--release_created'] }}
+      web_version:       ${{ steps.release.outputs['bjj-eire-web--version'] }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  push-api:
+    name: Push bjj-api chart
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: needs.release-please.outputs.api_released == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
+      - run: helm package bjj-eire-api/artifact --destination /tmp/charts
+      - run: |
+          helm push /tmp/bjj-api-${{ needs.release-please.outputs.api_version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+
+  push-mongodb:
+    name: Push bjj-mongodb chart
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: needs.release-please.outputs.mongodb_released == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
+      - run: helm package bjj-eire-mongodb/artifact --destination /tmp/charts
+      - run: |
+          helm push /tmp/bjj-mongodb-${{ needs.release-please.outputs.mongodb_version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+
+  push-web:
+    name: Push bjj-frontend chart
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: needs.release-please.outputs.web_released == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
+      - run: helm package bjj-eire-web/artifact --destination /tmp/charts
+      - run: |
+          helm push /tmp/bjj-frontend-${{ needs.release-please.outputs.web_version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+
+  push-umbrella:
+    name: Push bjj-eire umbrella chart
+    runs-on: ubuntu-latest
+    needs: [release-please, push-api, push-mongodb, push-web]
+    if: |
+      always() &&
+      needs.release-please.outputs.umbrella_released == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
+      - name: Build umbrella dependencies
+        run: helm dependency build bjj-eire/artifact
+      - name: Package & push
+        run: |
+          helm package bjj-eire/artifact --destination /tmp/charts
+          helm push /tmp/bjj-eire-${{ needs.release-please.outputs.umbrella_version }}.tgz \
+            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+      - name: Summary
+        run: |
+          echo "## Chart Published" >> $GITHUB_STEP_SUMMARY
+          echo "oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-eire:${{ needs.release-please.outputs.umbrella_version }}" >> $GITHUB_STEP_SUMMARY
+
+  update-app-version:
+    name: Bump appVersion in umbrella chart
+    runs-on: ubuntu-latest
+    if: github.event_name == 'repository_dispatch' && github.event.action == 'app-released'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.APP_REPO_PAT }}
+
+      - name: Determine new appVersion
+        id: ver
+        run: |
+          # Use API version if released, otherwise frontend version
+          if [ -n "${{ github.event.client_payload.api_version }}" ] && \
+             [ "${{ github.event.client_payload.api_released }}" = "true" ]; then
+            echo "version=${{ github.event.client_payload.api_version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ github.event.client_payload.frontend_version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update appVersion in umbrella Chart.yaml
+        run: |
+          sed -i "s/^appVersion:.*/appVersion: \"${{ steps.ver.outputs.version }}\"/" \
+            bjj-eire/artifact/Chart.yaml
+
+      - name: Open PR with appVersion bump
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.APP_REPO_PAT }}
+          branch: chore/app-version-${{ steps.ver.outputs.version }}
+          commit-message: "chore: update appVersion to ${{ steps.ver.outputs.version }}"
+          title: "chore: update umbrella appVersion to ${{ steps.ver.outputs.version }}"
+          body: |
+            Automated PR from BjjEire app release.
+
+            Updates `appVersion` in `bjj-eire/artifact/Chart.yaml` to `${{ steps.ver.outputs.version }}`.
+
+            Triggered by commit: ${{ github.event.client_payload.sha }}
+          labels: automated,charts

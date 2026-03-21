@@ -1,0 +1,119 @@
+name: Helm — Deploy to Kubernetes
+
+# Deploys the bjj-eire umbrella chart to dev or prod.
+# Azure AD secrets are injected at deploy time via GitHub repository secrets —
+# they are never stored in values files.
+#
+# Required GitHub repository secrets:
+#   AZURE_AD_TENANT_ID      — Entra ID tenant GUID
+#   AZURE_AD_CLIENT_ID      — App registration client GUID
+#   AZURE_AD_AUDIENCE       — API audience URI (e.g. api://<client-id>)
+#   KUBECONFIG_DEV          — base64-encoded kubeconfig for the dev cluster
+#   KUBECONFIG_PROD         — base64-encoded kubeconfig for the prod cluster
+#
+# Optional (if using GHCR private images):
+#   GHCR_PAT                — GitHub PAT with read:packages scope
+#
+# Usage — manual dispatch:
+#   1. Go to Actions → "Helm — Deploy to Kubernetes"
+#   2. Select environment (dev / prod) and image tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        options: [dev, prod]
+        default: dev
+      image_tag:
+        description: "Image tag to deploy (e.g. v1.2.3 or latest)"
+        required: true
+        default: "latest"
+
+concurrency:
+  group: helm-deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+  HELM_VERSION: "3.16.4"
+  RELEASE_NAME: bjj-eire
+  NAMESPACE: bjj-app
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          if [ "${{ inputs.environment }}" = "prod" ]; then
+            echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > ~/.kube/config
+          else
+            echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > ~/.kube/config
+          fi
+          chmod 600 ~/.kube/config
+
+      - name: Select values file
+        id: values
+        run: |
+          if [ "${{ inputs.environment }}" = "prod" ]; then
+            echo "file=bjj-eire/artifact/values-prod.yaml" >> "$GITHUB_OUTPUT"
+          else
+            echo "file=bjj-eire/artifact/values-dev.yaml" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Login to GHCR (Helm OCI)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ${{ env.REGISTRY }} \
+              --username ${{ github.actor }} \
+              --password-stdin
+
+      - name: Build umbrella dependencies
+        run: helm dependency build bjj-eire/artifact
+
+      - name: Deploy
+        run: |
+          helm upgrade --install ${{ env.RELEASE_NAME }} bjj-eire/artifact \
+            --namespace ${{ env.NAMESPACE }} \
+            --create-namespace \
+            -f bjj-eire/artifact/values.yaml \
+            -f ${{ steps.values.outputs.file }} \
+            --set bjj-api.api.image.tag=${{ inputs.image_tag }} \
+            --set bjj-frontend.frontend.image.tag=${{ inputs.image_tag }} \
+            --set 'bjj-api.api.env.AzureAd__TenantId=${{ secrets.AZURE_AD_TENANT_ID }}' \
+            --set 'bjj-api.api.env.AzureAd__ClientId=${{ secrets.AZURE_AD_CLIENT_ID }}' \
+            --set 'bjj-api.api.env.AzureAd__Audience=${{ secrets.AZURE_AD_AUDIENCE }}' \
+            --wait \
+            --timeout 5m
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/bjj-api -n ${{ env.NAMESPACE }} --timeout=3m
+          kubectl rollout status deployment/bjj-frontend -n ${{ env.NAMESPACE }} --timeout=3m
+
+      - name: Print deployed versions
+        run: |
+          echo "## Deployed to ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Image Tag |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| bjj-api      | ${{ inputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| bjj-frontend | ${{ inputs.image_tag }} |" >> $GITHUB_STEP_SUMMARY
+          helm list -n ${{ env.NAMESPACE }}
