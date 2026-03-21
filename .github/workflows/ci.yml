@@ -54,7 +54,6 @@ jobs:
       - name: Render umbrella chart
         env:
           # Dummy base64 value ("ci-dummy-password") — satisfies the Helm template lookup
-          # guard during offline rendering. Never used at runtime.
           CI_DUMMY_MONGO_PASSWORD: "Y2ktZHVtbXktcGFzc3dvcmQ="
         run: |
           helm dependency build bjj-eire/artifact
