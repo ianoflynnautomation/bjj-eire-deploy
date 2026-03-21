@@ -101,6 +101,8 @@ jobs:
             --set 'bjj-api.api.env.AzureAd__TenantId=${{ secrets.AZURE_AD_TENANT_ID }}' \
             --set 'bjj-api.api.env.AzureAd__ClientId=${{ secrets.AZURE_AD_CLIENT_ID }}' \
             --set 'bjj-api.api.env.AzureAd__Audience=${{ secrets.AZURE_AD_AUDIENCE }}' \
+            --set 'bjj-api.secrets.mongodbRootPassword.value=${{ secrets.MONGODB_ROOT_PASSWORD_B64 }}' \
+            --set 'bjj-mongodb.secrets.mongodbRootPassword.value=${{ secrets.MONGODB_ROOT_PASSWORD_B64 }}' \
             --wait \
             --timeout 5m
 
