@@ -3,7 +3,6 @@ bjj-mongodb:
     persistence:
       storageClassName: standard
       size: 5Gi
-
 bjj-api:
   api:
     image:
@@ -16,30 +15,23 @@ bjj-api:
       ASPNETCORE_HTTP_PORT: "80"
       ASPNETCORE_HTTPS_PORT: "443"
       ASPNETCORE_KESTREL_CERT_PATH: "/https/aspnetapp.pfx"
-
       CorsOptions__AllowedOrigins: "https://dev.bjjeire.ie,http://dev.bjjeire.ie"
       CorsOptions__AllowedMethods: "GET,POST,PUT,DELETE"
       CorsOptions__AllowedHeaders: "Authorization,Content-Type"
-
       RateLimitOptions__EnableRateLimiting: "false"
       RateLimitOptions__PermitLimit: "5"
       RateLimitOptions__WindowInSeconds: "10"
       RateLimitOptions__RejectionStatusCode: "429"
-
       CacheOptions__DefaultExpirationMinutes: "5"
-
       ServiceDefaults__ServiceName: "BjjEire.Api"
       ServiceDefaults__EnablePrometheus: "false"
-
       AzureAd__Instance: "https://login.microsoftonline.com/"
       AzureAd__TenantId: ""
       AzureAd__ClientId: ""
       AzureAd__Audience: ""
-
       Serilog__Properties__Application: "BjjWorld.Api"
       OTEL_EXPORTER_OTLP_ENDPOINT: ""
       OTEL_RESOURCE_ATTRIBUTES__service.name: "BjjWorld.Api"
-
   ingress:
     annotations:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -54,7 +46,6 @@ bjj-api:
       - secretName: bjj-dev-tls-secret
         hosts:
           - api.dev.bjjeire.ie
-
 bjj-frontend:
   frontend:
     image:
@@ -68,7 +59,6 @@ bjj-frontend:
       SERVICES_API_HTTP_0: "http://bjj-api:80"
     autoscaling:
       enabled: false
-
   ingress:
     annotations:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -82,9 +72,8 @@ bjj-frontend:
       - secretName: bjj-dev-tls-secret
         hosts:
           - dev.bjjeire.ie
-
 seeder:
   image:
     repository: ghcr.io/ianoflynnautomation/bjjeire-seeder
     pullPolicy: Always
-    tag: ""
+    tag: "0.1.2"
