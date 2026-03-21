@@ -52,11 +52,17 @@ jobs:
           version: ${{ env.HELM_VERSION }}
 
       - name: Render umbrella chart
+        env:
+          # Dummy base64 value ("ci-dummy-password") — satisfies the Helm template lookup
+          # guard during offline rendering. Never used at runtime.
+          CI_DUMMY_MONGO_PASSWORD: "Y2ktZHVtbXktcGFzc3dvcmQ="
         run: |
           helm dependency build bjj-eire/artifact
           helm template bjj-eire bjj-eire/artifact \
             --set bjj-api.api.image.tag=ci \
             --set bjj-frontend.frontend.image.tag=ci \
+            --set "bjj-api.secrets.mongodbRootPassword.value=${CI_DUMMY_MONGO_PASSWORD}" \
+            --set "bjj-mongodb.secrets.mongodbRootPassword.value=${CI_DUMMY_MONGO_PASSWORD}" \
             --debug > /tmp/rendered.yaml
 
       - name: Install kubeconform
