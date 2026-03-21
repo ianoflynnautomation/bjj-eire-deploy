@@ -1,0 +1,6 @@
+{
+  "charts/bjj-eire":          "0.1.0",
+  "charts/bjj-eire-api":      "0.1.0",
+  "charts/bjj-eire-mongodb":  "0.1.0",
+  "charts/bjj-eire-web":      "0.1.0"
+}
