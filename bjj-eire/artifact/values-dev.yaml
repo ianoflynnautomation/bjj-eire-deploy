@@ -82,3 +82,9 @@ bjj-frontend:
       - secretName: bjj-dev-tls-secret
         hosts:
           - dev.bjjeire.ie
+
+seeder:
+  image:
+    repository: ghcr.io/ianoflynnautomation/bjjeire-seeder
+    pullPolicy: Always
+    tag: ""

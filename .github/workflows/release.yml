@@ -160,17 +160,38 @@ jobs:
           sed -i "s/^appVersion:.*/appVersion: \"${{ steps.ver.outputs.version }}\"/" \
             bjj-eire/artifact/Chart.yaml
 
+      - name: Update seeder image tag in values files
+        run: |
+          yq -i '.seeder.image.tag = "${{ steps.ver.outputs.version }}"' \
+            bjj-eire/artifact/values-prod.yaml
+          yq -i '.seeder.image.tag = "${{ steps.ver.outputs.version }}"' \
+            bjj-eire/artifact/values-dev.yaml
+
       - name: Open PR with appVersion bump
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.APP_REPO_PAT }}
-          branch: chore/app-version-${{ steps.ver.outputs.version }}
-          commit-message: "chore: update appVersion to ${{ steps.ver.outputs.version }}"
-          title: "chore: update umbrella appVersion to ${{ steps.ver.outputs.version }}"
-          body: |
-            Automated PR from BjjEire app release.
+        env:
+          GH_TOKEN: ${{ secrets.APP_REPO_PAT }}
+          VERSION: ${{ steps.ver.outputs.version }}
+          SHA: ${{ github.event.client_payload.sha }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "chore/app-version-${VERSION}"
+          git add bjj-eire/artifact/Chart.yaml bjj-eire/artifact/values-prod.yaml bjj-eire/artifact/values-dev.yaml
+          git commit -m "chore: update appVersion to ${VERSION}"
+          git push origin "chore/app-version-${VERSION}"
+          gh pr create \
+            --title "chore: update umbrella appVersion to ${VERSION}" \
+            --body "$(cat <<EOF
+          Automated PR from BjjEire app release.
 
-            Updates `appVersion` in `bjj-eire/artifact/Chart.yaml` to `${{ steps.ver.outputs.version }}`.
+          - Updates \`appVersion\` in \`bjj-eire/artifact/Chart.yaml\` to \`${VERSION}\`
+          - Updates \`seeder.image.tag\` in \`values-prod.yaml\` to \`${VERSION}\`
 
-            Triggered by commit: ${{ github.event.client_payload.sha }}
-          labels: automated,charts
+          The seeder Job will run automatically on next \`helm upgrade\` via the post-upgrade hook.
+
+          Triggered by commit: ${SHA}
+          EOF
+          )" \
+            --label "automated" \
+            --label "charts" \
+            --base main

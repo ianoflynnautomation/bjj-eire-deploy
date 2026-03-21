@@ -93,3 +93,6 @@ bjj-frontend:
       - secretName: bjj-tls-secret
         hosts:
           - app.bjj.local
+
+seeder:
+  enabled: false
