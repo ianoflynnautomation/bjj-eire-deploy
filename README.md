@@ -205,6 +205,3 @@ See [SECURITY.md](SECURITY.md) for the vulnerability disclosure policy.
 ## License
 
 MIT © [Ian O'Flynn](https://github.com/ianoflynnautomation) — see [LICENSE](LICENSE).
-
-
-echo -n 'tFAwuRv9nj1RqZD2TXd77z' | base64
