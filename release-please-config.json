@@ -3,6 +3,7 @@
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true,
   "include-component-in-tag": true,
+  "pull-request-title-pattern": "chore: release ${version}",
   "changelog-sections": [
     { "type": "feat", "section": "### Features" },
     { "type": "fix",  "section": "### Bug Fixes" },
@@ -11,25 +12,25 @@
     { "type": "ci",    "section": "### CI",             "hidden": true }
   ],
   "packages": {
-    "bjj-eire": {
+    "bjj-eire/artifact": {
       "release-type": "helm",
       "component": "umbrella",
       "tag-name": "umbrella-v${version}",
       "changelog-path": "CHANGELOG.md"
     },
-    "bjj-eire-api": {
+    "bjj-eire-api/artifact": {
       "release-type": "helm",
       "component": "api",
       "tag-name": "api-v${version}",
       "changelog-path": "CHANGELOG.md"
     },
-    "bjj-eire-mongodb": {
+    "bjj-eire-mongodb/artifact": {
       "release-type": "helm",
       "component": "mongodb",
       "tag-name": "mongodb-v${version}",
       "changelog-path": "CHANGELOG.md"
     },
-    "bjj-eire-web": {
+    "bjj-eire-web/artifact": {
       "release-type": "helm",
       "component": "web",
       "tag-name": "web-v${version}",
