@@ -13,7 +13,6 @@ bjj-mongodb:
     persistence:
       storageClassName: managed-premium
       size: 50Gi
-
 bjj-api:
   api:
     image:
@@ -48,7 +47,6 @@ bjj-api:
       Serilog__Properties__Application: "BjjWorld.Api"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
       OTEL_RESOURCE_ATTRIBUTES__service.name: "BjjWorld.Api"
-
     resources:
       limits:
         cpu: 1000m
@@ -61,7 +59,6 @@ bjj-api:
       minReplicas: 2
       maxReplicas: 10
       targetCPUUtilizationPercentage: 70
-
   ingress:
     annotations:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -77,7 +74,6 @@ bjj-api:
       - secretName: bjj-prod-api-tls
         hosts:
           - api.bjjeire.com
-
 bjj-frontend:
   frontend:
     image:
@@ -107,7 +103,6 @@ bjj-frontend:
       maxReplicas: 6
       targetCPUUtilizationPercentage: 70
       targetMemoryUtilizationPercentage: 80
-
   ingress:
     annotations:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -127,9 +122,8 @@ bjj-frontend:
         hosts:
           - bjjeire.com
           - www.bjjeire.com
-
 seeder:
   image:
     repository: ghcr.io/ianoflynnautomation/bjjeire-seeder
     pullPolicy: IfNotPresent
-    tag: ""
+    tag: "0.1.2"
