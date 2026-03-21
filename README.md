@@ -26,25 +26,6 @@ This repository contains all Helm charts and CI/CD workflows to deploy the BJJ E
 | `bjj-frontend` | React 19 + Nginx single-page app |
 | `bjj-mongodb` | MongoDB 7.0 with persistent storage |
 
----
-
-## Architecture
-
-```
-Browser
-   │
-   ▼
-Ingress (nginx) ──► bjj-frontend (React 19 / Nginx)
-                         │
-                         │ internal HTTP/S
-                         ▼
-                    bjj-api (.NET 10 / Kestrel)
-                         │
-                         ▼
-                    bjj-mongodb (MongoDB 7.0)
-```
-
-Azure AD (Entra ID) secures the API. TLS is managed by cert-manager (Let's Encrypt) in dev/prod.
 
 ---
 
@@ -224,3 +205,6 @@ See [SECURITY.md](SECURITY.md) for the vulnerability disclosure policy.
 ## License
 
 MIT © [Ian O'Flynn](https://github.com/ianoflynnautomation) — see [LICENSE](LICENSE).
+
+
+echo -n 'tFAwuRv9nj1RqZD2TXd77z' | base64
