@@ -127,3 +127,9 @@ bjj-frontend:
         hosts:
           - bjjeire.com
           - www.bjjeire.com
+
+seeder:
+  image:
+    repository: ghcr.io/ianoflynnautomation/bjjeire-seeder
+    pullPolicy: IfNotPresent
+    tag: ""
