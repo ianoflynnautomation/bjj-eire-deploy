@@ -3,7 +3,7 @@ name: bjj-eire
 description: Umbrella Helm chart for BJJ Éire — React 19 frontend + .NET 10 API + MongoDB
 type: application
 version: 0.1.2
-appVersion: "0.1.2"
+appVersion: "0.1.3"
 keywords:
   - bjj
   - dotnet
