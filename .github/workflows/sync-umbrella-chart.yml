@@ -16,7 +16,7 @@ jobs:
     name: Update Umbrella Chart Dependency Versions
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Read subchart versions
         id: versions
