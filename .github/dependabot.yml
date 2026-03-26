@@ -1,18 +1,46 @@
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
+
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/bjj-eire-api"
+      interval: weekly
+      day: wednesday
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: docker
+    directory: /bjj-eire-api/artifact
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/bjj-eire-web"
+      interval: weekly
+      day: thursday
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: chore
+
+  - package-ecosystem: docker
+    directory: /bjj-eire-web/artifact
     schedule:
-      interval: "weekly"
-  - package-ecosystem: "docker"
-    directory: "/bjj-eire-mongodb"
+      interval: weekly
+      day: thursday
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: chore
+
+  - package-ecosystem: docker
+    directory: /bjj-eire-mongodb/artifact
     schedule:
-      interval: "weekly"
+      interval: weekly
+      day: thursday
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: chore

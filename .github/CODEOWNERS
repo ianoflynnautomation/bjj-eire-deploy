@@ -1,10 +1,19 @@
 # Default owners for everything
-* @ianoflynn
+* @@MyBjjEire/infra-team 
 
-# Charts
-/bjj-eire-api/** @ianoflynn
-/bjj-eire-web/** @ianoflynn
-/bjj-eire-mongodb/** @ianoflynn
+# Umbrella chart
+/bjj-eire/** @@MyBjjEire/infra-team 
+
+# Subcharts
+/bjj-eire-api/** @@MyBjjEire/infra-team 
+/bjj-eire-web/** @@MyBjjEire/infra-team 
+/bjj-eire-mongodb/** @@MyBjjEire/infra-team 
+
+# GitOps manifests
+/manifests/** @@MyBjjEire/infra-team 
 
 # Scripts
-/scripts/** @ianoflynn
+/scripts/** @@MyBjjEire/infra-team 
+
+# CI/CD workflows
+/.github/** @@MyBjjEire/infra-team 
