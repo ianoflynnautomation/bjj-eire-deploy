@@ -76,4 +76,4 @@ seeder:
   image:
     repository: ghcr.io/ianoflynnautomation/bjjeire-seeder
     pullPolicy: Always
-    tag: "0.1.4"
+    tag: "0.1.6"
