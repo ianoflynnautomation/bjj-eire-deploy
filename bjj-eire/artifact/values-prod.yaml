@@ -126,4 +126,4 @@ seeder:
   image:
     repository: ghcr.io/ianoflynnautomation/bjjeire-seeder
     pullPolicy: IfNotPresent
-    tag: "0.1.4"
+    tag: "0.1.7"
