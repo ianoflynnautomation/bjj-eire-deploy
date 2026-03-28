@@ -57,7 +57,7 @@ jobs:
     if: needs.release-please.outputs.api_released == 'true'
     steps:
       - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to GHCR
@@ -76,7 +76,7 @@ jobs:
     if: needs.release-please.outputs.mongodb_released == 'true'
     steps:
       - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to GHCR
@@ -95,7 +95,7 @@ jobs:
     if: needs.release-please.outputs.web_released == 'true'
     steps:
       - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to GHCR
@@ -116,7 +116,7 @@ jobs:
       needs.release-please.outputs.umbrella_released == 'true'
     steps:
       - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to GHCR
