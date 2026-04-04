@@ -157,6 +157,9 @@ bjj-api:
 
       CacheOptions__DefaultExpirationMinutes: "5"
 
+      FeatureManagement__BjjEvents: "true"
+      FeatureManagement__Gyms: "true"
+
       ServiceDefaults__ServiceName: "BjjEire.Api"
       ServiceDefaults__EnablePrometheus: "true"
 
