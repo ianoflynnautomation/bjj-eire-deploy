@@ -54,6 +54,8 @@ api:
     RateLimitOptions__WindowInSeconds: "10"
     RateLimitOptions__RejectionStatusCode: "429"
     CacheOptions__DefaultExpirationMinutes: "5"
+    FeatureManagement__BjjEvents: "true"
+    FeatureManagement__Gyms: "true"
     ServiceDefaults__ServiceName: "BjjEire.Api"
     ServiceDefaults__EnablePrometheus: "true"
     AzureAd__Instance: "https://login.microsoftonline.com/"
