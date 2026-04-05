@@ -175,10 +175,24 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b "chore/app-version-${VERSION}"
+
+          BRANCH="chore/app-version-${VERSION}"
+
+          # Remove stale remote branch from a previous run (idempotent)
+          git push origin --delete "${BRANCH}" 2>/dev/null || true
+
+          git checkout -b "${BRANCH}"
           git add bjj-eire/artifact/Chart.yaml bjj-eire/artifact/values-prod.yaml bjj-eire/artifact/values-dev.yaml
           git commit -m "chore: update appVersion to ${VERSION}"
-          git push origin "chore/app-version-${VERSION}"
+          git push origin "${BRANCH}"
+
+          # Skip PR creation if one already exists for this branch
+          EXISTING_PR=$(gh pr list --head "${BRANCH}" --state open --json number --jq '.[0].number')
+          if [ -n "${EXISTING_PR}" ]; then
+            echo "PR #${EXISTING_PR} already exists for ${BRANCH} — skipping creation."
+            exit 0
+          fi
+
           gh pr create \
             --title "chore: update umbrella appVersion to ${VERSION}" \
             --body "$(cat <<EOF
@@ -195,3 +209,4 @@ jobs:
             --label "automated" \
             --label "charts" \
             --base main
+
