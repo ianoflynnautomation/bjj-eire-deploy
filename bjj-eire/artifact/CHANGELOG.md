@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/umbrella-v0.1.3...umbrella-v0.1.4) (2026-04-04)
+
+
+### ### Features
+
+* add feature management values ([e265ef7](https://github.com/ianoflynnautomation/bjjeire-deploy/commit/e265ef746c5690620088fc56aa2b38eff0244cc4))
+
 ## [0.1.3](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/umbrella-v0.1.2...umbrella-v0.1.3) (2026-04-04)
 
 
