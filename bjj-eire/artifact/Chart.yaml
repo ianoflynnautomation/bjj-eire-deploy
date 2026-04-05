@@ -18,7 +18,7 @@ dependencies:
     repository: "file://../../bjj-eire-mongodb/artifact"
     condition: bjj-mongodb.mongodb.enabled
   - name: bjj-api
-    version: "0.1.1"
+    version: "0.1.2"
     repository: "file://../../bjj-eire-api/artifact"
     condition: bjj-api.api.enabled
   - name: bjj-frontend
