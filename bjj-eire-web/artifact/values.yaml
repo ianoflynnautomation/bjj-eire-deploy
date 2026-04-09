@@ -108,7 +108,7 @@ frontend:
   waitForApi:
     enabled: true
     apiUrl: "https://bjj-api.bjj-app.svc.cluster.local:443/health"
-    image: curlimages/curl:8.18.0
+    image: curlimages/curl:8.19.0
 
   nginxConfig: |
     access_log /var/log/nginx/access.log main;
