@@ -4,9 +4,6 @@ on:
   push:
     branches: [main]
 
-  repository_dispatch:
-    types: [app-released]
-
   workflow_dispatch:
     inputs:
       push:
@@ -135,78 +132,4 @@ jobs:
           echo "## Chart Published" >> $GITHUB_STEP_SUMMARY
           echo "oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-eire:${{ needs.release-please.outputs.umbrella_version }}" >> $GITHUB_STEP_SUMMARY
 
-  update-app-version:
-    name: Bump appVersion in umbrella chart
-    runs-on: ubuntu-latest
-    if: github.event_name == 'repository_dispatch' && github.event.action == 'app-released'
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          token: ${{ secrets.APP_REPO_PAT }}
-
-      - name: Determine new appVersion
-        id: ver
-        run: |
-          # Use API version if released, otherwise frontend version
-          if [ -n "${{ github.event.client_payload.api_version }}" ] && \
-             [ "${{ github.event.client_payload.api_released }}" = "true" ]; then
-            echo "version=${{ github.event.client_payload.api_version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "version=${{ github.event.client_payload.frontend_version }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Update appVersion in umbrella Chart.yaml
-        run: |
-          sed -i "s/^appVersion:.*/appVersion: \"${{ steps.ver.outputs.version }}\"/" \
-            bjj-eire/artifact/Chart.yaml
-
-      - name: Update seeder image tag in values files
-        run: |
-          yq -i '.seeder.image.tag = "${{ steps.ver.outputs.version }}"' \
-            bjj-eire/artifact/values-prod.yaml
-          yq -i '.seeder.image.tag = "${{ steps.ver.outputs.version }}"' \
-            bjj-eire/artifact/values-dev.yaml
-
-      - name: Open PR with appVersion bump
-        env:
-          GH_TOKEN: ${{ secrets.APP_REPO_PAT }}
-          VERSION: ${{ steps.ver.outputs.version }}
-          SHA: ${{ github.event.client_payload.sha }}
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          BRANCH="chore/app-version-${VERSION}"
-
-          # Remove stale remote branch from a previous run (idempotent)
-          git push origin --delete "${BRANCH}" 2>/dev/null || true
-
-          git checkout -b "${BRANCH}"
-          git add bjj-eire/artifact/Chart.yaml bjj-eire/artifact/values-prod.yaml bjj-eire/artifact/values-dev.yaml
-          git commit -m "chore: update appVersion to ${VERSION}"
-          git push origin "${BRANCH}"
-
-          # Skip PR creation if one already exists for this branch
-          EXISTING_PR=$(gh pr list --head "${BRANCH}" --state open --json number --jq '.[0].number')
-          if [ -n "${EXISTING_PR}" ]; then
-            echo "PR #${EXISTING_PR} already exists for ${BRANCH} — skipping creation."
-            exit 0
-          fi
-
-          gh pr create \
-            --title "chore: update umbrella appVersion to ${VERSION}" \
-            --body "$(cat <<EOF
-          Automated PR from BjjEire app release.
-
-          - Updates \`appVersion\` in \`bjj-eire/artifact/Chart.yaml\` to \`${VERSION}\`
-          - Updates \`seeder.image.tag\` in \`values-prod.yaml\` to \`${VERSION}\`
-
-          The seeder Job will run automatically on next \`helm upgrade\` via the post-upgrade hook.
-
-          Triggered by commit: ${SHA}
-          EOF
-          )" \
-            --label "automated" \
-            --label "charts" \
-            --base main
 

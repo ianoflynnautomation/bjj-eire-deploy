@@ -110,6 +110,12 @@ api:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  topologySpreadConstraints: []
+
+  podDisruptionBudget:
+    enabled: false
+    minAvailable: 1
+    maxUnavailable: ""
 
   autoscaling:
     enabled: false
