@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/web-v0.1.2...web-v0.1.3) (2026-04-12)
+
+
+### ### Bug Fixes
+
+* remove nginx config ([b831b65](https://github.com/ianoflynnautomation/bjjeire-deploy/commit/b831b65025625226ca1571c4147565d4755d15c5))
+
 ## [0.1.2](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/web-v0.1.1...web-v0.1.2) (2026-04-11)
 
 

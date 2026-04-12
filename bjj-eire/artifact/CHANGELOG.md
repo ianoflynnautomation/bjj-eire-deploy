@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/umbrella-v0.1.5...umbrella-v0.1.6) (2026-04-12)
+
+
+### ### Bug Fixes
+
+* add missing variables ([cc28348](https://github.com/ianoflynnautomation/bjjeire-deploy/commit/cc283480e1982b02cee68b43018bc31bafde8f44))
+* remove nginx config ([b831b65](https://github.com/ianoflynnautomation/bjjeire-deploy/commit/b831b65025625226ca1571c4147565d4755d15c5))
+
 ## [0.1.5](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/umbrella-v0.1.4...umbrella-v0.1.5) (2026-04-11)
 
 
