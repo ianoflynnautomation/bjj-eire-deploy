@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/api-v0.1.3...api-v0.1.4) (2026-04-12)
+
+
+### ### Bug Fixes
+
+* add missing variables ([cc28348](https://github.com/ianoflynnautomation/bjjeire-deploy/commit/cc283480e1982b02cee68b43018bc31bafde8f44))
+
 ## [0.1.3](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/api-v0.1.2...api-v0.1.3) (2026-04-11)
 
 
