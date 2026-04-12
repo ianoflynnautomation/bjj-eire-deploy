@@ -153,8 +153,13 @@ bjj-api:
       RateLimitOptions__WindowInSeconds: "10"
       RateLimitOptions__RejectionStatusCode: "429"
       CacheOptions__DefaultExpirationMinutes: "5"
+      CompetitionDeactivation__Interval: "1.00:00:00"
+      CompetitionDeactivation__InitialDelay: "00:00:30"
       FeatureManagement__BjjEvents: "true"
       FeatureManagement__Gyms: "true"
+      FeatureManagement__Stores: "true"
+      FeatureManagement__Competitions: "true"
+      Donation__BitcoinAddress: ""
       ServiceDefaults__ServiceName: "BjjEire.Api"
       ServiceDefaults__EnablePrometheus: "true"
       AzureAd__Instance: "https://login.microsoftonline.com/"
@@ -164,6 +169,7 @@ bjj-api:
       Serilog__Properties__Application: "BjjWorld.Api"
       OTEL_EXPORTER_OTLP_ENDPOINT: ""
       OTEL_RESOURCE_ATTRIBUTES__service.name: "BjjWorld.Api"
+      OTEL_RESOURCE_ATTRIBUTES__deployment.environment: "Production"
 
     resources:
       limits:
