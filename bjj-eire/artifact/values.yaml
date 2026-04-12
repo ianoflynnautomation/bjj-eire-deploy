@@ -304,7 +304,6 @@ bjj-frontend:
     service:
       type: ClusterIP
       port: 80
-      httpsPort: 443
 
     env:
       NODE_ENV: production
@@ -358,11 +357,6 @@ bjj-frontend:
       maxReplicas: 3
       targetCPUUtilizationPercentage: 80
       targetMemoryUtilizationPercentage: 80
-    tlsCert:
-      enabled: true
-      secretName: bjj-frontend-tls-secret
-      certMountPath: /etc/nginx/certs/aspnetapp.crt
-      keyMountPath: /etc/nginx/certs/aspnetapp.key
     waitForApi:
       enabled: true
       apiUrl: "https://bjj-api.bjj-app.svc.cluster.local:443/health"
@@ -384,19 +378,7 @@ bjj-frontend:
         hosts:
           - app.bjj.local
 
-  secrets:
-    frontendTlsCert:
-      enabled: true
-      create: false
-      name: bjj-frontend-tls-secret
-      key: tls.crt
-      value: ""
-    frontendTlsKey:
-      enabled: true
-      create: false
-      name: bjj-frontend-tls-secret
-      key: tls.key
-      value: ""
+  secrets: {}
 
   azure:
     enabled: false

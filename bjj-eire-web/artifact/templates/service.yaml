@@ -14,12 +14,6 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
-    {{- if .Values.frontend.service.httpsPort }}
-    - port: {{ .Values.frontend.service.httpsPort }}
-      targetPort: https
-      protocol: TCP
-      name: https
-    {{- end }}
   selector:
     {{- include "bjj-frontend.selectorLabels" . | nindent 4 }}
 {{- end }}

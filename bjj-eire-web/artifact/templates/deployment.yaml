@@ -82,11 +82,6 @@ spec:
         - name: http
           containerPort: {{ .Values.frontend.service.port }}
           protocol: TCP
-        {{- if .Values.frontend.service.httpsPort }}
-        - name: https
-          containerPort: {{ .Values.frontend.service.httpsPort }}
-          protocol: TCP
-        {{- end }}
         envFrom:
         - configMapRef:
             name: {{ include "bjj-frontend.fullname" . }}
@@ -104,28 +99,4 @@ spec:
         {{- end }}
         resources:
           {{- toYaml .Values.frontend.resources | nindent 10 }}
-        volumeMounts:
-        - name: nginx-config-volume
-          mountPath: /etc/nginx/templates/default.conf.template
-          subPath: nginx.conf
-          readOnly: true
-        {{- if .Values.frontend.tlsCert.enabled }}
-        - name: frontend-tls-certs
-          mountPath: {{ .Values.frontend.tlsCert.certMountPath }}
-          subPath: tls.crt
-          readOnly: true
-        - name: frontend-tls-certs
-          mountPath: {{ .Values.frontend.tlsCert.keyMountPath }}
-          subPath: tls.key
-          readOnly: true
-        {{- end }}
-      volumes:
-      - name: nginx-config-volume
-        configMap:
-          name: {{ include "bjj-frontend.fullname" . }}-nginx-config
-      {{- if .Values.frontend.tlsCert.enabled }}
-      - name: frontend-tls-certs
-        secret:
-          secretName: {{ .Values.frontend.tlsCert.secretName }}
-      {{- end }}
 {{- end }}
