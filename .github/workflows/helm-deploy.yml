@@ -8,6 +8,7 @@ name: Helm — Deploy to Kubernetes
 #   AZURE_AD_TENANT_ID      — Entra ID tenant GUID
 #   AZURE_AD_CLIENT_ID      — App registration client GUID
 #   AZURE_AD_AUDIENCE       — API audience URI (e.g. api://<client-id>)
+#   DONATION_BITCOIN_ADDRESS — BTC donation address
 #   KUBECONFIG_DEV          — base64-encoded kubeconfig for the dev cluster
 #   KUBECONFIG_PROD         — base64-encoded kubeconfig for the prod cluster
 #
@@ -101,6 +102,7 @@ jobs:
             --set 'bjj-api.api.env.AzureAd__TenantId=${{ secrets.AZURE_AD_TENANT_ID }}' \
             --set 'bjj-api.api.env.AzureAd__ClientId=${{ secrets.AZURE_AD_CLIENT_ID }}' \
             --set 'bjj-api.api.env.AzureAd__Audience=${{ secrets.AZURE_AD_AUDIENCE }}' \
+            --set 'bjj-api.api.env.Donation__BitcoinAddress=${{ secrets.DONATION_BITCOIN_ADDRESS }}' \
             --set 'bjj-api.secrets.mongodbRootPassword.value=${{ secrets.MONGODB_ROOT_PASSWORD_B64 }}' \
             --set 'bjj-mongodb.secrets.mongodbRootPassword.value=${{ secrets.MONGODB_ROOT_PASSWORD_B64 }}' \
             --wait \

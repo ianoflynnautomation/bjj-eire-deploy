@@ -9,7 +9,7 @@ bjj-mongodb:
     image:
       repository: mongo
       pullPolicy: IfNotPresent
-      tag: "7.0"
+      tag: "8.2"
     imagePullSecrets: []
     serviceAccount:
       create: true
@@ -308,7 +308,6 @@ bjj-frontend:
     env:
       NODE_ENV: production
       PORT: "80"
-      SERVICES_API_HTTPS_0: "https://bjj-api:443"
       SERVICES_API_HTTP_0: "http://bjj-api:80"
 
     resources:
@@ -359,8 +358,8 @@ bjj-frontend:
       targetMemoryUtilizationPercentage: 80
     waitForApi:
       enabled: true
-      apiUrl: "https://bjj-api.bjj-app.svc.cluster.local:443/health"
-      image: curlimages/curl:8.11.1
+      apiUrl: "http://bjj-api.bjj-app.svc.cluster.local:80/health"
+      image: curlimages/curl:8.19.0
 
   ingress:
     enabled: true

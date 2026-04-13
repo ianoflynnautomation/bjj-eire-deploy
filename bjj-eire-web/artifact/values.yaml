@@ -43,7 +43,6 @@ frontend:
   env:
     NODE_ENV: production
     PORT: "80"
-    SERVICES_API_HTTPS_0: "https://bjj-api:443"
     SERVICES_API_HTTP_0: "http://bjj-api:80"
 
   resources:
@@ -106,7 +105,7 @@ frontend:
 
   waitForApi:
     enabled: true
-    apiUrl: "https://bjj-api.bjj-app.svc.cluster.local:443/health"
+    apiUrl: "http://bjj-api.bjj-app.svc.cluster.local:80/health"
     image: curlimages/curl:8.19.0
 
 ingress:

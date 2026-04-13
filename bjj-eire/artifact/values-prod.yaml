@@ -1,7 +1,7 @@
 bjj-mongodb:
   mongodb:
     image:
-      tag: "7.0"
+      tag: "8.2"
       pullPolicy: IfNotPresent
     resources:
       limits:
@@ -96,7 +96,6 @@ bjj-frontend:
     env:
       NODE_ENV: production
       PORT: "80"
-      SERVICES_API_HTTPS_0: "https://bjj-api:443"
       SERVICES_API_HTTP_0: "http://bjj-api:80"
     resources:
       limits:

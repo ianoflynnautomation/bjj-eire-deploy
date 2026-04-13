@@ -63,7 +63,6 @@ bjj-frontend:
     env:
       NODE_ENV: production
       PORT: "80"
-      SERVICES_API_HTTPS_0: "https://bjj-api:443"
       SERVICES_API_HTTP_0: "http://bjj-api:80"
     autoscaling:
       enabled: false

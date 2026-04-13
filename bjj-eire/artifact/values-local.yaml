@@ -40,6 +40,7 @@ bjj-api:
       Serilog__Properties__Application: "BjjWorld.Api"
       OTEL_EXPORTER_OTLP_ENDPOINT: ""
       OTEL_RESOURCE_ATTRIBUTES__service.name: "BjjWorld.Api"
+      OTEL_RESOURCE_ATTRIBUTES__deployment.environment: "Development"
 
     resources:
       limits:
@@ -69,7 +70,6 @@ bjj-frontend:
     env:
       NODE_ENV: production
       PORT: "80"
-      SERVICES_API_HTTPS_0: "https://bjj-api:443"
       SERVICES_API_HTTP_0: "http://bjj-api:80"
     autoscaling:
       enabled: false
