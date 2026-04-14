@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/umbrella-v0.1.6...umbrella-v0.1.7) (2026-04-13)
+
+
+### ### Bug Fixes
+
+* add 8.2 mongo version ([5acf7e9](https://github.com/ianoflynnautomation/bjjeire-deploy/commit/5acf7e947beaec16c50809d2eb89accf28fa5fca))
+
 ## [0.1.6](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/umbrella-v0.1.5...umbrella-v0.1.6) (2026-04-12)
 
 

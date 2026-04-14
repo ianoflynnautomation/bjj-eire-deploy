@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/web-v0.1.3...web-v0.1.4) (2026-04-13)
+
+
+### ### Bug Fixes
+
+* add 8.2 mongo version ([5acf7e9](https://github.com/ianoflynnautomation/bjjeire-deploy/commit/5acf7e947beaec16c50809d2eb89accf28fa5fca))
+
 ## [0.1.3](https://github.com/ianoflynnautomation/bjjeire-deploy/compare/web-v0.1.2...web-v0.1.3) (2026-04-12)
 
 
