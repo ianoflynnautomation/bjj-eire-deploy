@@ -41,7 +41,7 @@ jobs:
       web_released:      ${{ steps.release.outputs['bjj-eire-web--release_created'] }}
       web_version:       ${{ steps.release.outputs['bjj-eire-web--version'] }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           config-file: release-please-config.json
