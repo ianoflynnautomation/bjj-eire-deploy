@@ -41,7 +41,7 @@ jobs:
       web_released:      ${{ steps.release.outputs['bjj-eire-web--release_created'] }}
       web_version:       ${{ steps.release.outputs['bjj-eire-web--version'] }}
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7  # v5.0.0
         id: release
         with:
           config-file: release-please-config.json
@@ -52,57 +52,96 @@ jobs:
     runs-on: ubuntu-latest
     needs: release-please
     if: needs.release-please.outputs.api_released == 'true'
+    env:
+      VERSION: ${{ needs.release-please.outputs.api_version }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | \
-            helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
-      - run: helm package bjj-eire-api/artifact --destination /tmp/charts
-      - run: |
-          helm push /tmp/bjj-api-${{ needs.release-please.outputs.api_version }}.tgz \
-            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+          echo "::group::helm registry login"
+          printf '%s' "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$ACTOR" --password-stdin
+          echo "::endgroup::"
+      - name: Package chart
+        run: |
+          echo "::group::helm package"
+          helm package bjj-eire-api/artifact --destination /tmp/charts
+          echo "::endgroup::"
+      - name: Push chart
+        run: |
+          echo "::group::helm push"
+          helm push "/tmp/charts/bjj-api-${VERSION}.tgz" "oci://${REGISTRY}/${OWNER}"
+          echo "::endgroup::"
+          echo "::notice title=Chart pushed::oci://${REGISTRY}/${OWNER}/bjj-api:${VERSION}"
 
   push-mongodb:
     name: Push bjj-mongodb chart
     runs-on: ubuntu-latest
     needs: release-please
     if: needs.release-please.outputs.mongodb_released == 'true'
+    env:
+      VERSION: ${{ needs.release-please.outputs.mongodb_version }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | \
-            helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
-      - run: helm package bjj-eire-mongodb/artifact --destination /tmp/charts
-      - run: |
-          helm push /tmp/bjj-mongodb-${{ needs.release-please.outputs.mongodb_version }}.tgz \
-            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+          echo "::group::helm registry login"
+          printf '%s' "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$ACTOR" --password-stdin
+          echo "::endgroup::"
+      - name: Package chart
+        run: |
+          echo "::group::helm package"
+          helm package bjj-eire-mongodb/artifact --destination /tmp/charts
+          echo "::endgroup::"
+      - name: Push chart
+        run: |
+          echo "::group::helm push"
+          helm push "/tmp/charts/bjj-mongodb-${VERSION}.tgz" "oci://${REGISTRY}/${OWNER}"
+          echo "::endgroup::"
+          echo "::notice title=Chart pushed::oci://${REGISTRY}/${OWNER}/bjj-mongodb:${VERSION}"
 
   push-web:
     name: Push bjj-frontend chart
     runs-on: ubuntu-latest
     needs: release-please
     if: needs.release-please.outputs.web_released == 'true'
+    env:
+      VERSION: ${{ needs.release-please.outputs.web_version }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | \
-            helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
-      - run: helm package bjj-eire-web/artifact --destination /tmp/charts
-      - run: |
-          helm push /tmp/bjj-frontend-${{ needs.release-please.outputs.web_version }}.tgz \
-            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
+          echo "::group::helm registry login"
+          printf '%s' "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$ACTOR" --password-stdin
+          echo "::endgroup::"
+      - name: Package chart
+        run: |
+          echo "::group::helm package"
+          helm package bjj-eire-web/artifact --destination /tmp/charts
+          echo "::endgroup::"
+      - name: Push chart
+        run: |
+          echo "::group::helm push"
+          helm push "/tmp/charts/bjj-frontend-${VERSION}.tgz" "oci://${REGISTRY}/${OWNER}"
+          echo "::endgroup::"
+          echo "::notice title=Chart pushed::oci://${REGISTRY}/${OWNER}/bjj-frontend:${VERSION}"
 
   push-umbrella:
     name: Push bjj-eire umbrella chart
@@ -111,25 +150,49 @@ jobs:
     if: |
       always() &&
       needs.release-please.outputs.umbrella_released == 'true'
+    env:
+      VERSION: ${{ needs.release-please.outputs.umbrella_version }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
         with:
           version: ${{ env.HELM_VERSION }}
       - name: Login to GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | \
-            helm registry login ${{ env.REGISTRY }} --username ${{ github.actor }} --password-stdin
+          echo "::group::helm registry login"
+          printf '%s' "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$ACTOR" --password-stdin
+          echo "::endgroup::"
       - name: Build umbrella dependencies
-        run: helm dependency build bjj-eire/artifact
+        run: |
+          echo "::group::helm dependency build"
+          helm dependency build bjj-eire/artifact
+          echo "::endgroup::"
       - name: Package & push
         run: |
+          echo "::group::helm package"
           helm package bjj-eire/artifact --destination /tmp/charts
-          helm push /tmp/bjj-eire-${{ needs.release-please.outputs.umbrella_version }}.tgz \
-            oci://${{ env.REGISTRY }}/${{ env.OWNER }}
-      - name: Summary
-        run: |
-          echo "## Chart Published" >> $GITHUB_STEP_SUMMARY
-          echo "oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-eire:${{ needs.release-please.outputs.umbrella_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "::endgroup::"
+          echo "::group::helm push"
+          helm push "/tmp/charts/bjj-eire-${VERSION}.tgz" "oci://${REGISTRY}/${OWNER}"
+          echo "::endgroup::"
+          echo "::notice title=Umbrella chart pushed::oci://${REGISTRY}/${OWNER}/bjj-eire:${VERSION}"
+      - name: Write job summary
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        env:
+          CHART_REF: oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-eire:${{ env.VERSION }}
+        with:
+          script: |
+            const ref = process.env.CHART_REF;
+            await core.summary
+              .addHeading('Helm chart published', 2)
+              .addTable([
+                [{ data: 'Chart', header: true }, { data: 'Ref', header: true }],
+                ['bjj-eire (umbrella)', `\`${ref}\``],
+              ])
+              .write();
+            core.notice(`Published ${ref}`, { title: 'Helm chart' });
 
 

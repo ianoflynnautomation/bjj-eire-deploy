@@ -46,9 +46,6 @@ bjj-api:
       ServiceDefaults__ServiceName: "BjjEire.Api"
       ServiceDefaults__EnablePrometheus: "true"
       AzureAd__Instance: "https://login.microsoftonline.com/"
-      AzureAd__TenantId: ""
-      AzureAd__ClientId: ""
-      AzureAd__Audience: ""
       Donation__BitcoinAddress: ""
       Serilog__Properties__Application: "BjjWorld.Api"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
@@ -81,6 +78,13 @@ bjj-api:
       - secretName: bjj-prod-api-tls
         hosts:
           - api.bjjeire.com
+  azure:
+    enabled: true
+    workloadIdentity:
+      enabled: true
+  secrets:
+    azureAdConfig:
+      enabled: true
 bjj-frontend:
   frontend:
     image:
