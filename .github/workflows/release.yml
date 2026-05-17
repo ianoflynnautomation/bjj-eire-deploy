@@ -1,45 +1,27 @@
 name: Release — Charts
-
 on:
   push:
     branches: [main]
-
   workflow_dispatch:
-    inputs:
-      push:
-        description: "Push charts to GHCR (default: lint only)"
-        type: boolean
-        default: false
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
-env:
-  REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
-  HELM_VERSION: "3.16.4"
 
 permissions:
   contents: write
   pull-requests: write
-  packages: write
+  actions: write
 
 jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     outputs:
-      umbrella_released: ${{ steps.release.outputs['bjj-eire--release_created'] }}
-      umbrella_version:  ${{ steps.release.outputs['bjj-eire--version'] }}
-      umbrella_tag:      ${{ steps.release.outputs['bjj-eire--tag_name'] }}
       api_released:      ${{ steps.release.outputs['bjj-eire-api--release_created'] }}
-      api_version:       ${{ steps.release.outputs['bjj-eire-api--version'] }}
+      api_tag:           ${{ steps.release.outputs['bjj-eire-api--tag_name'] }}
       mongodb_released:  ${{ steps.release.outputs['bjj-eire-mongodb--release_created'] }}
-      mongodb_version:   ${{ steps.release.outputs['bjj-eire-mongodb--version'] }}
+      mongodb_tag:       ${{ steps.release.outputs['bjj-eire-mongodb--tag_name'] }}
       web_released:      ${{ steps.release.outputs['bjj-eire-web--release_created'] }}
-      web_version:       ${{ steps.release.outputs['bjj-eire-web--version'] }}
+      web_tag:           ${{ steps.release.outputs['bjj-eire-web--tag_name'] }}
+      umbrella_released: ${{ steps.release.outputs['bjj-eire--release_created'] }}
+      umbrella_tag:      ${{ steps.release.outputs['bjj-eire--tag_name'] }}
     steps:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7  # v5.0.0
         id: release
@@ -47,152 +29,34 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  push-api:
-    name: Push bjj-api chart
+  dispatch-publish:
+    name: Dispatch publish-chart for released charts
     runs-on: ubuntu-latest
     needs: release-please
-    if: needs.release-please.outputs.api_released == 'true'
-    env:
-      VERSION: ${{ needs.release-please.outputs.api_version }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
-        with:
-          version: ${{ env.HELM_VERSION }}
-      - name: Login to GHCR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTOR: ${{ github.actor }}
-        run: |
-          echo "::group::helm registry login"
-          printf '%s' "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$ACTOR" --password-stdin
-          echo "::endgroup::"
-      - name: Package chart
-        run: |
-          echo "::group::helm package"
-          helm package bjj-eire-api/artifact --destination /tmp/charts
-          echo "::endgroup::"
-      - name: Push chart
-        run: |
-          echo "::group::helm push"
-          helm push "/tmp/charts/bjj-api-${VERSION}.tgz" "oci://${REGISTRY}/${OWNER}"
-          echo "::endgroup::"
-          echo "::notice title=Chart pushed::oci://${REGISTRY}/${OWNER}/bjj-api:${VERSION}"
-
-  push-mongodb:
-    name: Push bjj-mongodb chart
-    runs-on: ubuntu-latest
-    needs: release-please
-    if: needs.release-please.outputs.mongodb_released == 'true'
-    env:
-      VERSION: ${{ needs.release-please.outputs.mongodb_version }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
-        with:
-          version: ${{ env.HELM_VERSION }}
-      - name: Login to GHCR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTOR: ${{ github.actor }}
-        run: |
-          echo "::group::helm registry login"
-          printf '%s' "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$ACTOR" --password-stdin
-          echo "::endgroup::"
-      - name: Package chart
-        run: |
-          echo "::group::helm package"
-          helm package bjj-eire-mongodb/artifact --destination /tmp/charts
-          echo "::endgroup::"
-      - name: Push chart
-        run: |
-          echo "::group::helm push"
-          helm push "/tmp/charts/bjj-mongodb-${VERSION}.tgz" "oci://${REGISTRY}/${OWNER}"
-          echo "::endgroup::"
-          echo "::notice title=Chart pushed::oci://${REGISTRY}/${OWNER}/bjj-mongodb:${VERSION}"
-
-  push-web:
-    name: Push bjj-frontend chart
-    runs-on: ubuntu-latest
-    needs: release-please
-    if: needs.release-please.outputs.web_released == 'true'
-    env:
-      VERSION: ${{ needs.release-please.outputs.web_version }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
-        with:
-          version: ${{ env.HELM_VERSION }}
-      - name: Login to GHCR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTOR: ${{ github.actor }}
-        run: |
-          echo "::group::helm registry login"
-          printf '%s' "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$ACTOR" --password-stdin
-          echo "::endgroup::"
-      - name: Package chart
-        run: |
-          echo "::group::helm package"
-          helm package bjj-eire-web/artifact --destination /tmp/charts
-          echo "::endgroup::"
-      - name: Push chart
-        run: |
-          echo "::group::helm push"
-          helm push "/tmp/charts/bjj-frontend-${VERSION}.tgz" "oci://${REGISTRY}/${OWNER}"
-          echo "::endgroup::"
-          echo "::notice title=Chart pushed::oci://${REGISTRY}/${OWNER}/bjj-frontend:${VERSION}"
-
-  push-umbrella:
-    name: Push bjj-eire umbrella chart
-    runs-on: ubuntu-latest
-    needs: [release-please, push-api, push-mongodb, push-web]
     if: |
-      always() &&
-      needs.release-please.outputs.umbrella_released == 'true'
-    env:
-      VERSION: ${{ needs.release-please.outputs.umbrella_version }}
+      needs.release-please.outputs.api_released == 'true'
+      || needs.release-please.outputs.mongodb_released == 'true'
+      || needs.release-please.outputs.web_released == 'true'
+      || needs.release-please.outputs.umbrella_released == 'true'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2  # v5.0.0
-        with:
-          version: ${{ env.HELM_VERSION }}
-      - name: Login to GHCR
+      - name: Dispatch publish-chart.yml per released chart
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTOR: ${{ github.actor }}
+          API_RELEASED:      ${{ needs.release-please.outputs.api_released }}
+          API_TAG:           ${{ needs.release-please.outputs.api_tag }}
+          MONGODB_RELEASED:  ${{ needs.release-please.outputs.mongodb_released }}
+          MONGODB_TAG:       ${{ needs.release-please.outputs.mongodb_tag }}
+          WEB_RELEASED:      ${{ needs.release-please.outputs.web_released }}
+          WEB_TAG:           ${{ needs.release-please.outputs.web_tag }}
+          UMBRELLA_RELEASED: ${{ needs.release-please.outputs.umbrella_released }}
+          UMBRELLA_TAG:      ${{ needs.release-please.outputs.umbrella_tag }}
         run: |
-          echo "::group::helm registry login"
-          printf '%s' "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$ACTOR" --password-stdin
-          echo "::endgroup::"
-      - name: Build umbrella dependencies
-        run: |
-          echo "::group::helm dependency build"
-          helm dependency build bjj-eire/artifact
-          echo "::endgroup::"
-      - name: Package & push
-        run: |
-          echo "::group::helm package"
-          helm package bjj-eire/artifact --destination /tmp/charts
-          echo "::endgroup::"
-          echo "::group::helm push"
-          helm push "/tmp/charts/bjj-eire-${VERSION}.tgz" "oci://${REGISTRY}/${OWNER}"
-          echo "::endgroup::"
-          echo "::notice title=Umbrella chart pushed::oci://${REGISTRY}/${OWNER}/bjj-eire:${VERSION}"
-      - name: Write job summary
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
-        env:
-          CHART_REF: oci://${{ env.REGISTRY }}/${{ env.OWNER }}/bjj-eire:${{ env.VERSION }}
-        with:
-          script: |
-            const ref = process.env.CHART_REF;
-            await core.summary
-              .addHeading('Helm chart published', 2)
-              .addTable([
-                [{ data: 'Chart', header: true }, { data: 'Ref', header: true }],
-                ['bjj-eire (umbrella)', `\`${ref}\``],
-              ])
-              .write();
-            core.notice(`Published ${ref}`, { title: 'Helm chart' });
-
-
+          dispatch() {
+            local tag="$1"
+            echo "::notice title=Dispatching publish-chart::tag=$tag"
+            gh workflow run publish-chart.yml --field tag="$tag"
+          }
+          if [ "$API_RELEASED"      = "true" ]; then dispatch "$API_TAG"; fi
+          if [ "$MONGODB_RELEASED"  = "true" ]; then dispatch "$MONGODB_TAG"; fi
+          if [ "$WEB_RELEASED"      = "true" ]; then dispatch "$WEB_TAG"; fi
+          if [ "$UMBRELLA_RELEASED" = "true" ]; then dispatch "$UMBRELLA_TAG"; fi
