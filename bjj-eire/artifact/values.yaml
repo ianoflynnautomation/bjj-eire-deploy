@@ -384,6 +384,7 @@ seeder:
     repository: ghcr.io/ianoflynnautomation/bjjeire-seeder
     pullPolicy: IfNotPresent
     tag: "0.1.9"
+  imagePullSecrets: []
   hookPolicy: "post-install,post-upgrade"
   mongodb:
     host: bjj-mongodb

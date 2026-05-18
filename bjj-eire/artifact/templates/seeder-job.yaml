@@ -25,6 +25,10 @@ spec:
         app.kubernetes.io/component: seeder
     spec:
       restartPolicy: Never
+      {{- with .Values.seeder.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
